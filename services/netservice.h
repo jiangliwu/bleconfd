@@ -1,5 +1,5 @@
 //
-// Copyright [2018] [jacobgladish@yahoo.com]
+// Copyright [2018] [Comcast NBCUniversal]
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -13,22 +13,21 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 //
+#ifndef __WPA_CONTROL_H__
+#define __WPA_CONTROL_H__
 
-#ifndef __BEACON_H__
-#define __BEACON_H__
+#include "../defs.h"
+#include "../rpcserver.h"
 
-#include <string>
-
-/**
- * start up beacon
- * @param s the expected device name
- * @param isNeedUpdateName is need update the device name? it need restart BLE service, will drop all connection
- */
-void startBeacon(std::string const& s);
-
-/**
- * we need clean all BLE connection and staus when ready to accept new client
- */
-void reinitializeBLE();
+class NetService : public BasicRpcService
+{
+public:
+  NetService();
+  virtual ~NetService();
+  virtual void init(std::string const& configFile,
+      RpcNotificationFunction const& callback) override;
+private:
+  cJSON* getInterfaces(cJSON const* req);
+};
 
 #endif

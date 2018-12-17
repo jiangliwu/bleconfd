@@ -1,33 +1,51 @@
 <?xml version="1.0" encoding="utf-8"?>
-
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<com.chauthai.swipereveallayout.SwipeRevealLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/swipe_layout"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:gravity="center"
-    android:paddingStart="16dp"
-    android:paddingBottom="6dp"
-    android:paddingTop="6dp"
-    android:orientation="horizontal">
+    app:dragEdge="right"
+    app:mode="same_level">
 
-    <ImageButton
-        android:id="@+id/delete_btn"
-        android:layout_width="20dp"
-        android:layout_height="20dp"
-        android:layout_marginRight="10dp"
-        android:background="@android:drawable/ic_menu_delete" />
 
-    <ImageButton
-        android:id="@+id/edit_btn"
-        android:layout_width="20dp"
-        android:layout_height="20dp"
-        android:layout_marginRight="10dp"
-        android:background="@android:drawable/ic_menu_edit" />
+    <FrameLayout
+        android:id="@+id/delete_layout"
+        android:layout_width="50dp"
 
-    <TextView
-        android:id="@+id/key_value_txt"
+        android:layout_height="match_parent"
+        android:background="#ffcc0000">
+
+        <ImageButton
+            android:id="@+id/delete_btn"
+            android:layout_width="30dp"
+            android:layout_gravity="center"
+            android:layout_height="30dp"
+            android:background="@android:drawable/ic_menu_delete" />
+    </FrameLayout>
+
+    <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="a=b"
-        android:textSize="14dp"
-        />
-</LinearLayout>
+        android:gravity="center"
+        android:orientation="horizontal"
+        android:paddingStart="16dp"
+        android:paddingTop="6dp"
+        android:paddingBottom="6dp">
+
+
+
+        <ImageButton
+            android:id="@+id/edit_btn"
+            android:layout_width="20dp"
+            android:layout_height="20dp"
+            android:layout_marginRight="10dp"
+            android:background="@android:drawable/ic_menu_edit" />
+
+        <TextView
+            android:id="@+id/key_value_txt"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="a=b"
+            android:textSize="14dp" />
+    </LinearLayout>
+</com.chauthai.swipereveallayout.SwipeRevealLayout>

@@ -1,20 +1,20 @@
-/*
- * Copyright [2017] [Comcast, Corp.]
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+//
+// Copyright [2018] [Comcast NBCUniversal]
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//      http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+//
 #include "jsonRpc.h"
-#include "xLog.h"
+#include "rpclogger.h"
 
 #include <iomanip>
 #include <map>
@@ -110,25 +110,33 @@ jsonRpc_insertFunction(char const* name, jsonRpcFunction func)
 }
 
 int
-jsonRpc_getInt(cJSON* argv, int idx)
+jsonRpc_getInt(cJSON const* argv, int idx)
 {
   return jsonRpc_getn(argv, idx)->valueint;
 }
 
-char const*
-jsonRpc_getString(cJSON const* req, char const* name, bool required, char const* parent)
+int
+jsonRpc_getInt(cJSON const* req, char const* name, bool required)
 {
-  char* s = NULL;
-
-  cJSON* params = cJSON_GetObjectItem(req, parent);
-  if (!params && required)
+  cJSON* item = cJSON_GetObjectItem(req, name);
+  if (!item && required)
   {
     std::stringstream buff;
-    buff << "missing '" << parent << "' structure in request";
+    buff << "missing argument ";
+    buff << name;
+    buff << " from argv list";
     throw std::runtime_error(buff.str());
   }
 
-  cJSON* item = cJSON_GetObjectItem(params, name);
+  return item->valueint;
+}
+
+char const*
+jsonRpc_getString(cJSON const* req, char const* name, bool required)
+{
+  char* s = NULL;
+
+  cJSON* item = cJSON_GetObjectItem(req, name);
 
   if (!item && required)
   {
@@ -144,6 +152,19 @@ jsonRpc_getString(cJSON const* req, char const* name, bool required, char const*
     s = NULL;
 
   return s;
+}
+
+char const*
+jsonRpc_getString_fromParams(cJSON const* req, char const* name, bool required)
+{
+  cJSON const* params = cJSON_GetObjectItem(req, "params");
+  if (!params)
+  {
+    std::stringstream buff;
+    buff << "missing params from argv list";
+    throw std::runtime_error(buff.str());
+  }
+  return jsonRpc_getString(params, name, required);
 }
 
 char const*
@@ -169,7 +190,7 @@ jsonRpc_getBool(cJSON* argv, int idx)
 }
 
 cJSON *
-jsonRpc_getn(cJSON* argv, int idx)
+jsonRpc_getn(cJSON const* argv, int idx)
 {
   int const n = cJSON_GetArraySize(argv);
   if (n <= idx)

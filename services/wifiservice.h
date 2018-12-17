@@ -1,5 +1,5 @@
 //
-// Copyright [2018] [jacobgladish@yahoo.com]
+// Copyright [2018] [Comcast NBCUniversal]
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -16,21 +16,19 @@
 #ifndef __WPA_CONTROL_H__
 #define __WPA_CONTROL_H__
 
-#include <string>
-#include "defs.h"
+#include "../defs.h"
+#include "../rpcserver.h"
 
-class WpaClient
+class WiFiService : public BasicRpcService
 {
 public:
-  WpaClient(std::string const& control_socket);
-  ~WpaClient();
+  WiFiService();
+  virtual ~WiFiService();
+  virtual void init(std::string const& configFile,
+      RpcNotificationFunction const& callback) override;
+private:
+  cJSON* getStatus(cJSON const* req);
+  cJSON* connect(cJSON const* req);
 };
-
-int wpaControl_init(char const* control_socket, ResponseSender const& sender);
-int wpaControl_shutdown();
-
-// rpc functions
-int wpaControl_connectToNetwork(cJSON const* req, cJSON** res);
-int wpaControl_getStatus(cJSON const* req, cJSON** res);
 
 #endif

@@ -1,5 +1,5 @@
 //
-// Copyright [2018] [jacobgladish@yahoo.com]
+// Copyright [2018] [Comcast NBCUniversal]
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -16,19 +16,21 @@
 #ifndef __APP_SETTINGS_H__
 #define __APP_SETTINGS_H__
 
-#include <cJSON.h>
+#include "../defs.h"
+#include "../rpcserver.h"
 
-enum appSettings_Kind
+class AppSettingsService : public BasicRpcService
 {
-  appSettingsKind_Boolean = 1,
-  appSettingsKind_Int32   = 2,
-  appSettingsKind_Int64   = 3,
-  appSettingsKind_UInt64  = 4,
-  appSettingsKind_Double  = 5
+public:
+  AppSettingsService();
+  virtual ~AppSettingsService();
+  virtual void init(std::string const& configFile,
+    RpcNotificationFunction const& callback) override;
+private:
+  cJSON* get(cJSON const* req);
+  cJSON* set(cJSON const* req);
 };
 
-
-int appSettings_init(char const* settings_file);
 
 /**
  * delete value
@@ -38,6 +40,7 @@ int appSettings_init(char const* settings_file);
 int appSettings_delete(cJSON const* req, cJSON** res);
 int appSettings_set(cJSON const* req, cJSON** res);
 int appSettings_get(cJSON const* req, cJSON** res);
+
 
 /**
  * read all current keys and values

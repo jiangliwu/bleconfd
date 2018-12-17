@@ -1,3 +1,18 @@
+//
+// Copyright [2018] [Comcast NBCUniversal]
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//      http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+//
 #include <stdio.h>
 #include <errno.h>
 #include <ctype.h>
@@ -15,10 +30,11 @@
 #include <lib/bluetooth/hci_lib.h>
 #include <lib/hci.h>
 
+#include "../rpclogger.h"
+#include "../util.h"
+
 #include "beacon.h"
-#include "xLog.h"
-#include "appSettings.h"
-#include "util.h"
+#include "../services/appsettings.h"
 
 using std::string;
 using std::vector;
@@ -395,6 +411,16 @@ reinitializeBLE()
   cmdUp(ctl, di.dev_id);
   cmdScan(ctl, di.dev_id, "piscan");
   cmdNoleadv(di.dev_id);
+
+  // TODO: hardcoded for now to
+  // [antman]: sudo hciconfig hci0 class 3a0430
+  // [antman]: sudo hciconfig hci0 class
+  // hci0:   Type: Primary  Bus: UART
+  //    BD Address: B8:27:EB:A0:DA:2C  ACL MTU: 1021:8  SCO MTU: 64:1
+  //    Class: 0x3a0430
+  //    Service Classes: Networking, Capturing, Object Transfer, Audio
+  //    Device Class: Audio/Video, Video Camera
+  system("hciconfig hci0 class 3a0430");
 
   std::string startUpCmd01(appSettings_get_ble_value("ble_init_cmd01"));
   hcitoolCmd(di.dev_id, parseArgs(startUpCmd01));

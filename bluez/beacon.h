@@ -13,12 +13,21 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 //
-#ifndef __BLECONFD_DEFS_H__
-#define __BLECONFD_DEFS_H__
+#ifndef __BEACON_H__
+#define __BEACON_H__
 
-#define UNUSED_PARAM(X) UNUSED_ ## X __attribute__((__unused__))
-#define BLECONFD_VERSION "1.0"
+#include <string>
 
-#define kJsonRpcVersion "2.0"
+/**
+ * start up beacon
+ * @param s the expected device name
+ * @param isNeedUpdateName is need update the device name? it need restart BLE service, will drop all connection
+ */
+void startBeacon(std::string const& s);
+
+/**
+ * we need clean all BLE connection and staus when ready to accept new client
+ */
+void reinitializeBLE();
 
 #endif

@@ -1,5 +1,5 @@
 //
-// Copyright [2018] [jacobgladish@yahoo.com]
+// Copyright [2018] [Comcast NBCUniversal]
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -13,9 +13,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 //
-#include "appSettings.h"
-#include "jsonRpc.h"
-#include "xLog.h"
+#include "appsettings.h"
+#include "../rpclogger.h"
+#include "../jsonRpc.h"
 
 #include <glib.h>
 #include <string.h>
@@ -32,36 +32,36 @@ static char const* kBLE = "ble";
 static char const* kWifi = "wlan";
 
 /**
- * return file not exist error
+ * return file does not exist error
  * @param result the response
  * @return the result code
  */
 int
 file_not_exist(cJSON** result)
 {
-  return jsonRpc_makeError(result, ENOENT, "settings file not exist");
+  return jsonRpc_makeError(result, ENOENT, "settings file does not exist");
 }
 
 /**
- * return group not exist error
+ * return group does not exist error
  * @param result the response
  * @return the result code
  */
 int
 group_not_exist(cJSON** result, char const* group)
 {
-  return jsonRpc_makeError(result, ENOENT, "group with name %s not exist", group);
+  return jsonRpc_makeError(result, ENOENT, "group with name %s does not exist", group);
 }
 
 /**
- * return key not exist error
+ * return key does not exist error
  * @param result the response
  * @return the result code
  */
 int
 key_not_exist(cJSON** result, char const* group, char const* key)
 {
-  return jsonRpc_makeError(result, ENOENT, "key with name %s not exist in group %s", key, group);
+  return jsonRpc_makeError(result, ENOENT, "key with name %s does not exist in group %s", key, group);
 }
 
 /**
@@ -176,31 +176,96 @@ g_key_file_is_group_name (const gchar *name)
   return TRUE;
 }
 
-int
-appSettings_init(char const* settings_file)
+extern "C"
+{
+  RpcService*
+  AppSettings_Create()
+  {
+    return new AppSettingsService();
+  }
+}
+
+AppSettingsService::AppSettingsService()
+  : BasicRpcService("settings")
+{
+}
+
+AppSettingsService::~AppSettingsService()
+{
+}
+
+void
+AppSettingsService::init(std::string const& configFile,
+  RpcNotificationFunction const& UNUSED_PARAM(callback))
 {
   GKeyFileFlags flags = G_KEY_FILE_KEEP_COMMENTS;
 
-  size_t file_name_len = strlen(settings_file);
+  size_t file_name_len = strlen(configFile.c_str());
   settings_file_path = static_cast<char*>(malloc(file_name_len + 1));
-  memcpy(settings_file_path, settings_file, file_name_len);
+  memcpy(settings_file_path, configFile.c_str(), file_name_len);
   settings_file_path[file_name_len] = '\0';
 
   g_autoptr(GError) error = nullptr;
-  if (!g_key_file_load_from_file(key_file, settings_file, flags, &error))
+  if (!g_key_file_load_from_file(key_file, configFile.c_str(), flags, &error))
   {
     if (!g_error_matches(error, G_FILE_ERROR, G_FILE_ERROR_NOENT))
     {
-      XLOG_ERROR("failed to load settings file %s. %s", settings_file,
-                 error->message);
-      return error->code;
-    } else
+      XLOG_ERROR("failed to load settings file %s. %s", configFile.c_str(), error->message);
+    } 
+    else
     {
       key_file = g_key_file_new();
     }
   }
 
-  return 0;
+  registerMethod("get", [this](cJSON const* req) -> cJSON* { return this->get(req); });
+  registerMethod("set", [this](cJSON const* req) -> cJSON* { return this->set(req); });
+
+  registerMethod("get-all", [this](cJSON const* req) -> cJSON* { 
+    cJSON* rpc_response = nullptr;
+    appSettings_get_all(req, &rpc_response);
+    return rpc_response;
+  });
+
+  registerMethod("delete", [this](cJSON const* req) -> cJSON* { 
+    cJSON* rpc_response = nullptr;
+    appSettings_delete(req, &rpc_response);
+    return rpc_response;
+  });
+
+  registerMethod("group-add", [this](cJSON const* req) -> cJSON* { 
+    cJSON* rpc_response = nullptr;
+    appSettings_add_group(req, &rpc_response);
+    return rpc_response;
+  });
+
+  registerMethod("group-modify", [this](cJSON const* req) -> cJSON* { 
+    cJSON* rpc_response = nullptr;
+    appSettings_modify_group(req, &rpc_response);
+    return rpc_response;
+  });
+
+  registerMethod("group-delete", [this](cJSON const* req) -> cJSON* { 
+    cJSON* rpc_response = nullptr;
+    appSettings_delete_group(req, &rpc_response);
+    return rpc_response;
+  });
+}
+
+cJSON*
+AppSettingsService::get(cJSON const* req)
+{
+  cJSON* rpc_response = nullptr;
+  appSettings_get(req, &rpc_response);
+  return rpc_response;
+}
+
+cJSON*
+AppSettingsService::set(cJSON const* req)
+{
+  cJSON* rpc_response = nullptr;
+  appSettings_set(req, &rpc_response);
+  return rpc_response;
 }
 
 // get string value from local ini file
@@ -243,8 +308,8 @@ appSettings_delete(cJSON const* req, cJSON** res)
     return file_not_exist(res);
   }
 
-  char const* group = jsonRpc_getString(req, "group", true);
-  char const* name = jsonRpc_getString(req, "name", true);
+  char const* group = jsonRpc_getString_fromParams(req, "group", true);
+  char const* name = jsonRpc_getString_fromParams(req, "name", true);
 
   if (!g_key_file_has_group(key_file, group))
   {
@@ -285,9 +350,9 @@ appSettings_set(cJSON const* req, cJSON** res)
     return file_not_exist(res);
   }
 
-  char const* group = jsonRpc_getString(req, "group", true);
-  char const* name = jsonRpc_getString(req, "name", true);
-  char const* value = jsonRpc_getString(req, "value", true);
+  char const* group = jsonRpc_getString_fromParams(req, "group", true);
+  char const* name = jsonRpc_getString_fromParams(req, "name", true);
+  char const* value = jsonRpc_getString_fromParams(req, "value", true);
 
   if (!g_key_file_has_group(key_file, group))
   {
@@ -323,8 +388,8 @@ appSettings_get(cJSON const* req, cJSON** res)
     return file_not_exist(res);
   }
 
-  char const* group = jsonRpc_getString(req, "group", true);
-  char const* name = jsonRpc_getString(req, "name", true);
+  char const* group = jsonRpc_getString_fromParams(req, "group", true);
+  char const* name = jsonRpc_getString_fromParams(req, "name", true);
 
   if (!g_key_file_has_group(key_file, group))
   {
@@ -401,7 +466,7 @@ appSettings_add_group(cJSON const* req, cJSON** res)
   {
     return file_not_exist(res);
   }
-  char const* group = jsonRpc_getString(req, "group", true);
+  char const* group = jsonRpc_getString_fromParams(req, "group", true);
 
   if (g_key_file_has_group(key_file, group))
   {
@@ -446,7 +511,7 @@ appSettings_delete_group(cJSON const* req, cJSON** res)
     return file_not_exist(res);
   }
 
-  char const* group = jsonRpc_getString(req, "group", true);
+  char const* group = jsonRpc_getString_fromParams(req, "group", true);
   if (!g_key_file_has_group(key_file, group))
   {
     return group_not_exist(res, group);
@@ -479,15 +544,15 @@ appSettings_modify_group(cJSON const* req, cJSON** res)
     return file_not_exist(res);
   }
 
-  char const* origin_group = jsonRpc_getString(req, "originGroup", true);
-  char const* new_group = jsonRpc_getString(req, "newGroup", true);
+  char const* origin_group = jsonRpc_getString_fromParams(req, "originGroup", true);
+  char const* new_group = jsonRpc_getString_fromParams(req, "newGroup", true);
 
   if (!strcmp(origin_group, new_group))
   {
     return jsonRpc_makeError(res, ENOTSUP, "new group name cannot be same as origin group name");
   }
 
-  // origin group name not exist
+  // origin group name does not exist
   if (!g_key_file_has_group(key_file, origin_group))
   {
     return group_not_exist(res, origin_group);

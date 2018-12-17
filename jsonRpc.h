@@ -1,18 +1,18 @@
-/*
- * Copyright [2017] [Comcast, Corp.]
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+//
+// Copyright [2018] [Comcast NBCUniversal]
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//      http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+//
 #ifndef __JSON_RPC_H__
 #define __JSON_RPC_H__
 
@@ -56,12 +56,18 @@ bool jsonRpc_insertFunction(char const* name, jsonRpcFunction func);
 /**
  *
  */
-int jsonRpc_getInt(cJSON* argv, int idx);
+int jsonRpc_getInt(cJSON const* argv, int idx);
+int jsonRpc_getInt(cJSON const* argv, char const* name, bool required);
 
 /**
  *
  */
-char const* jsonRpc_getString(cJSON const* req, char const* name, bool required = false, char const* parent = "params");
+char const* jsonRpc_getString(cJSON const* req, char const* name, bool required);
+
+/**
+ * get string value from params
+ */
+char const* jsonRpc_getString_fromParams(cJSON const* req, char const* name, bool required);
 
 /**
  *
@@ -71,7 +77,7 @@ bool jsonRpc_getBool(cJSON* argv, int idx);
 /**
  *
  */
-cJSON* jsonRpc_getn(cJSON* argv, int idx);
+cJSON* jsonRpc_getn(cJSON const* argv, int idx);
 
 /**
  *
@@ -106,26 +112,8 @@ int jsonRpc_makeResultValue(cJSON** result, int code, char const* fmt, ...)
 
 int jsonRpc_notImplemented(cJSON** result);
 
-#if 0
-class jsonRpcStringBuffer
-{
-public:
-  jsonRpcStringBuffer();
-  ~jsonRpcStringBuffer();
-
-  operator char* () const
-  {
-    return m_buff;
-  }
-
-private:
-  char* m_buff;
-};
-#endif
-
 
 int jsonRpc_result(int n, cJSON** result);
-// int jsonRpc_resultString(int n, jsonRpcStringBuffer& buff, cJSON** result);
 int jsonRpc_resultBool(int n, unsigned char& b, cJSON** result);
 int jsonRpc_resultInt(int ret, int& n, cJSON** result);
 int jsonRpc_resultUnsignedInt(int ret, unsigned int& n, cJSON** result);
